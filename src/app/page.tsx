@@ -94,40 +94,45 @@ export default function ContactsPage() {
     setPreview(f ? URL.createObjectURL(f) : null);
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      let imageUrl: string | undefined;
-      if (file) {
-        const uploadUrl = await generateUploadUrl();
-        const res = await fetch(uploadUrl, {
-          method: "POST",
-          headers: { "Content-Type": file.type },
-          body: file,
-        });
-        const { storageId } = await res.json();
-        imageUrl = await storeUserImage({ storageId });
-      }
+// ... existing code ...
 
-      if (editingId) {
-        await editContact({ id: editingId, ...form, image: imageUrl });
-      } else {
-        await createContact({ ...form, image: imageUrl });
-      }
-
-      setOpen(false);
-      setForm({ first_name: "", last_name: "", email: "", phone: "", title: "" });
-      setFile(null);
-      setPreview(null);
-      setEditingId(null);
-    } catch (error) {
-      console.error("Error saving contact:", error);
-      alert("Failed to save contact. Please try again.");
-    } finally {
-      setLoading(false);
+const handleSave = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+  try {
+    let imageUrl: string | undefined = undefined; // Initialize as undefined instead of null
+    if (file) {
+      const uploadUrl = await generateUploadUrl();
+      const res = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      const { storageId } = await res.json();
+      const result = await storeUserImage({ storageId });
+      imageUrl = result || undefined; // Ensure we don't assign null
     }
-  };
+
+    if (editingId) {
+      await editContact({ id: editingId, ...form, image: imageUrl });
+    } else {
+      await createContact({ ...form, image: imageUrl });
+    }
+
+    setOpen(false);
+    setForm({ first_name: "", last_name: "", email: "", phone: "", title: "" });
+    setFile(null);
+    setPreview(null);
+    setEditingId(null);
+  } catch (error) {
+    console.error("Error saving contact:", error);
+    alert("Failed to save contact. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
+
+// ... existing code ...
 
   const handleDelete = async (id: Id<"contacts">) => {
     try {
