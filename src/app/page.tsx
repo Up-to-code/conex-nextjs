@@ -7,8 +7,32 @@ import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 
+// Define a proper type for our contacts
+interface Contact {
+  _id: Id<"contacts">;
+  _creationTime: number;
+  first_name: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  title?: string;
+  image?: string;
+}
+
 export default function ContactsPage() {
-  const contacts = useQuery(api.contacts.getContacts) || [];
+  const contactsData = useQuery(api.contacts.getContacts) || [];
+  // Cast to our Contact type with safe fallbacks for undefined values
+  const contacts: Contact[] = contactsData.map((contact: any) => ({
+    _id: contact._id,
+    _creationTime: contact._creationTime,
+    first_name: contact.first_name || "",
+    last_name: contact.last_name || "",
+    email: contact.email || "",
+    phone: contact.phone || "",
+    title: contact.title || "",
+    image: contact.image || "",
+  }));
+
   const createContact = useMutation(api.contacts.createContact);
   const editContact = useMutation(api.contacts.editContact);
   const deleteContact = useMutation(api.contacts.deleteContact);
@@ -45,13 +69,13 @@ export default function ContactsPage() {
     const searchLower = searchTerm.toLowerCase();
     return (
       contact.first_name.toLowerCase().includes(searchLower) ||
-      contact.last_name.toLowerCase().includes(searchLower) ||
-      contact.email.toLowerCase().includes(searchLower) ||
-      contact.phone.toLowerCase().includes(searchLower)
+      (contact.last_name || "").toLowerCase().includes(searchLower) ||
+      (contact.email || "").toLowerCase().includes(searchLower) ||
+      (contact.phone || "").toLowerCase().includes(searchLower)
     );
   });
 
-  const startEdit = (c: any) => {
+  const startEdit = (c: Contact) => {
     setEditingId(c._id);
     setForm({
       first_name: c.first_name,
@@ -227,7 +251,7 @@ export default function ContactsPage() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <AnimatePresence>
-              {filteredContacts.map((c: any) => (
+              {filteredContacts.map((c) => (
                 <motion.div
                   key={c._id}
                   initial={{ opacity: 0, y: 8 }}
@@ -240,19 +264,19 @@ export default function ContactsPage() {
                     {c.image ? (
                       <img
                         src={c.image}
-                        alt={`${c.first_name} ${c.last_name}`}
+                        alt={`${c.first_name} ${c.last_name || ''}`}
                         className="w-14 h-14 rounded-full object-cover flex-shrink-0"
                       />
                     ) : (
                       <div className="w-14 h-14 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center flex-shrink-0">
                         <span className="text-indigo-800 dark:text-indigo-200 font-medium text-lg">
-                          {c.first_name[0]}{c.last_name[0]}
+                          {c.first_name[0]}{c.last_name?.[0] || ''}
                         </span>
                       </div>
                     )}
                     <div className="min-w-0">
                       <div className="font-semibold text-gray-900 dark:text-gray-100 truncate">
-                        {c.first_name} {c.last_name}
+                        {c.first_name} {c.last_name || ''}
                       </div>
                       {c.title && (
                         <div className="text-sm text-indigo-600 dark:text-indigo-400 truncate">
@@ -275,7 +299,7 @@ export default function ContactsPage() {
                     <button
                       onClick={() => startEdit(c)}
                       className="p-2 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-900 dark:hover:bg-blue-800 dark:text-blue-200 transition"
-                      aria-label={`Edit ${c.first_name} ${c.last_name}`}
+                      aria-label={`Edit ${c.first_name} ${c.last_name || ''}`}
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -307,7 +331,7 @@ export default function ContactsPage() {
                       <button
                         onClick={() => setDeleteConfirmId(c._id)}
                         className="p-2 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-900 dark:hover:bg-red-800 dark:text-red-200 transition"
-                        aria-label={`Delete ${c.first_name} ${c.last_name}`}
+                        aria-label={`Delete ${c.first_name} ${c.last_name || ''}`}
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
