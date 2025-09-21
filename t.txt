@@ -1,0 +1,8 @@
+
+
+
+defineTable({
+  optionalString: v.optional(v.string()),
+  optionalNumber: v.optional(v.number()),
+});
+  stringOrNumber: v.union(v.string(), v.number()),
